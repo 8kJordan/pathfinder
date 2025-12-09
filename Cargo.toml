@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 pcap = "2.3.0"
+clap = "4.5.53"

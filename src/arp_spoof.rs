@@ -1,5 +1,4 @@
-use pcap::Device;
-use std::net::Ipv4Addr;
+
 
 #[repr(C, packed)]
 #[derive(Clone, Debug)]
@@ -24,7 +23,36 @@ pub struct ArpPacket {
     pub target_ip: [u8; 4]
 }
 
-// TODO cont here
-fn build_spoof_pck(arp_packet: ArpPacket){
+fn build_spoof_res(arp_packet: ArpPacket, eth_header: EtherHeader) -> [u8; 42]{
+
+    let dstm = eth_header.dst_mac;
+    let srcm = eth_header.src_mac;
+    let e_type = eth_header.ether_type.to_be_bytes();
+
+    let htype = arp_packet.htype.to_be_bytes();
+    let ptype = arp_packet.ptype.to_be_bytes();
+    let opcode = arp_packet.opcode.to_be_bytes();
+    let smac = arp_packet.sender_mac;
+    let sip = arp_packet.sender_ip;
+    let tmac = arp_packet.target_mac;
+    let tip = arp_packet.target_ip;
+
+    [
+        // -- ETHERNET HEADER (14 bytes) --
+        dstm[0], dstm[1], dstm[2], dstm[3], dstm[4], dstm[5], // dst MAC
+        srcm[0], srcm[1], srcm[2], srcm[3], srcm[4], srcm[5], // src MAC
+        e_type[0], e_type[1],                                     // ether type (ARP = 0x0806)
+
+        // -- ARP PACKET (28 bytes) --
+        htype[0], htype[1],                                       // hardware type
+        ptype[0], ptype[1],                                       // protocol type
+        arp_packet.hlen,                                          // hardware size
+        arp_packet.plen,                                          // protocol size
+        opcode[0], opcode[1],                                     // opcode (request/reply)
+        smac[0], smac[1], smac[2], smac[3], smac[4], smac[5],     // sender MAC
+        sip[0], sip[1], sip[2], sip[3],                           // sender IP
+        tmac[0], tmac[1], tmac[2], tmac[3], tmac[4], tmac[5],     // target MAC
+        tip[0], tip[1], tip[2], tip[3],                           // target IP
+    ]
 
 }
